@@ -76,11 +76,13 @@ int main (int argc, char * argv[] )
 	bzero(&remote, remote_length);
 
 	//waits for an incoming message
+
 	while(true)
 	{
 		// bzero(buffer,sizeof(buffer));
 		nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
 		printf("%s\n", buffer);
+
 
 
 		if(!strcmp(buffer, "put")) {
@@ -90,8 +92,8 @@ int main (int argc, char * argv[] )
 			sprintf(fileName, "%s", buffer);
 			printf("%s\n", buffer);
 
-			fp = fopen("foo1", "w+");
-			if(fp != NULL) {
+			fp = fopen(fileName, "w+");
+			if(fp == NULL) {
 				printf("Error opening file.\n");
 				return -1;
 			}
