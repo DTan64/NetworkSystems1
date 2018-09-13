@@ -34,18 +34,7 @@ int main (int argc, char * argv[])
 	char ls[] = "ls";
 	char exitServer[] = "exit";
 
-
-
-
 	FILE* fp;
-	fp = fopen("foo1", "r");
-	// fseek(fp, 0, SEEK_END);
-	// long fileSize = ftell(fp);
-	// fseek(fp, 0, SEEK_SET);
-	// char* fileBuffer = (char *)malloc(fileSize);
-	// fread(fileBuffer, sizeof(char), fileSize, fp);
-	// printf("%s\n", fileBuffer);
-	// printf("%ld\n", fileSize);
 
 	if (argc < 3)
 	{
@@ -74,15 +63,17 @@ int main (int argc, char * argv[])
 	  it will report an error if the message fails to leave the computer
 	  however, with UDP, there is no error if the message is lost in the network once it leaves the computer.
 	 ******************/
-	char message[] = "Over";
+	char over[] = "Over";
 	int offset = 0;
+	struct sockaddr_in server_addr;
+	unsigned int addr_length= sizeof(server_addr);
+	char* splitInput;
 
 	while(1) {
 		printf("Here is a list of commands: [get, put, ls, exit]\n");
 		printf("What would you like to do?\n");
 		fgets(userInput, MAXBUFSIZE, stdin);
 
-		char* splitInput;
 		splitInput = strtok(userInput, " ");
 
 
@@ -91,29 +82,51 @@ int main (int argc, char * argv[])
 		if(!strcmp(splitInput, "get")) {
 			nbytes = sendto(sock, &get, sizeof(get), 0, (struct sockaddr *) &remote, sizeof(remote));
 			splitInput = strtok(NULL, " ");
+
 			nbytes = sendto(sock, splitInput, sizeof(splitInput), 0, (struct sockaddr *) &remote, sizeof(remote));
-			return 0;
+
+
+			// bzero(buffer,sizeof(buffer));
+			// nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &server_addr, (socklen_t *) &addr_length);
+			printf("%s\n", buffer);
+
+		}
+		if(!strcmp(splitInput, "put")) {
+			nbytes = sendto(sock, &put, sizeof(put), 0, (struct sockaddr *) &remote, sizeof(remote));
+			splitInput = strtok(NULL, " ");
+			printf("%s\n", splitInput);
+			splitInput[strlen(splitInput) - 1] = '\0';
+			nbytes = sendto(sock, splitInput, sizeof(splitInput), 0, (struct sockaddr *) &remote, sizeof(remote));
+
+			fp = fopen(splitInput, "r");
+			if(fp == NULL) {
+				printf("Error opening file.\n");
+				continue;
+			}
+
+			bzero(buffer,sizeof(buffer));
+			while(!feof(fp))
+			{
+				fread(buffer, sizeof(char), MAXBUFSIZE, fp);
+				printf("%s\n", buffer);
+				nbytes = sendto(sock, &buffer, sizeof(buffer), 0, (struct sockaddr *) &remote, sizeof(remote));
+				printf("Sent: %i bytes\n", nbytes);
+			}
+			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
+
+
+			// bzero(buffer,sizeof(buffer));
+			// nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &server_addr, (socklen_t *) &addr_length);
 
 		}
 		else {
 			// Blocks till bytes are received
-			nbytes = sendto(sock, &splitInput, sizeof(splitInput), 0, (struct sockaddr *) &remote, sizeof(remote));
-			struct sockaddr_in from_addr;
-			unsigned int addr_length = sizeof(from_addr);
+
 			bzero(buffer,sizeof(buffer));
-			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &from_addr, (socklen_t *) &addr_length);
+			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &server_addr, (socklen_t *) &addr_length);
 			printf("%s\n", buffer);
 		}
 	}
-
-	while(!feof(fp))
-	{
-		fread(buffer, sizeof(char), MAXBUFSIZE, fp);
-		printf("%s\n", buffer);
-		nbytes = sendto(sock, buffer, sizeof(buffer), 0, (struct sockaddr *) &remote, sizeof(remote));
-		printf("Sent: %i bytes\n", nbytes);
-	}
-	nbytes = sendto(sock, &message, sizeof(message), 0, (struct sockaddr *) &remote, sizeof(remote));
 
 	//nbytes = sendto(sock, fileBuffer, sizeof(buffer), 0, (struct sockaddr *) &remote, sizeof(remote));
 	// printf("Sent: %i bytes\n", nbytes);

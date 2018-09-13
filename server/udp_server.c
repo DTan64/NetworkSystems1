@@ -31,6 +31,13 @@ int main (int argc, char * argv[] )
 
 
 	FILE* fp;
+	// fp = fopen("foo1", "w+");
+	// if(fp == NULL) {
+	// 	printf("error opening file.\n");
+	// 	return -1;
+	// }
+	// printf("you made it.\n");
+	// return -2;
 
 
 	if (argc != 2)
@@ -77,20 +84,25 @@ int main (int argc, char * argv[] )
 
 
 		if(!strcmp(buffer, "put")) {
-			printf("hit1\n");
 
 			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
 			printf("%s\n", buffer);
 			sprintf(fileName, "%s", buffer);
+			printf("%s\n", buffer);
 
-			fp = fopen(fileName, "w");
+			fp = fopen("foo1", "w+");
 			if(fp != NULL) {
-				printf("It works!\n");
+				printf("Error opening file.\n");
+				return -1;
 			}
 			while(true) {
 				if(!strcmp(buffer, "Over")) {
+					printf("hit\n");
 					fclose(fp);
+					break;
 				}
+				nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
+				printf("%s\n", buffer);
 				fwrite(buffer, sizeof(char), sizeof(buffer), fp);
 			}
 		}
