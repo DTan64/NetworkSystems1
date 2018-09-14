@@ -25,6 +25,7 @@ int main (int argc, char * argv[])
 	char buffer[MAXBUFSIZE];
 	bool flag = false;
 	char* userInput = (char*)malloc(MAXBUFSIZE);
+	char fileName[MAXBUFSIZE];
 
 	struct sockaddr_in remote;              //"Internet socket address structure"
 
@@ -33,6 +34,7 @@ int main (int argc, char * argv[])
 	char delete[] = "delete";
 	char ls[] = "ls";
 	char exitServer[] = "exit";
+	char over[] = "Over";
 
 	FILE* fp;
 
@@ -63,8 +65,6 @@ int main (int argc, char * argv[])
 	  it will report an error if the message fails to leave the computer
 	  however, with UDP, there is no error if the message is lost in the network once it leaves the computer.
 	 ******************/
-	char over[] = "Over";
-	int offset = 0;
 	struct sockaddr_in server_addr;
 	unsigned int addr_length= sizeof(server_addr);
 	char* splitInput;
@@ -82,13 +82,27 @@ int main (int argc, char * argv[])
 		if(!strcmp(splitInput, "get")) {
 			nbytes = sendto(sock, &get, sizeof(get), 0, (struct sockaddr *) &remote, sizeof(remote));
 			splitInput = strtok(NULL, " ");
-
+			splitInput[strlen(splitInput) - 1] = '\0';
 			nbytes = sendto(sock, splitInput, sizeof(splitInput), 0, (struct sockaddr *) &remote, sizeof(remote));
 
+			sprintf(fileName, "%s", splitInput);
 
-			// bzero(buffer,sizeof(buffer));
-			// nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &server_addr, (socklen_t *) &addr_length);
-			printf("%s\n", buffer);
+			fp = fopen(fileName, "w+");
+
+			if(fp == NULL) {
+				printf("Error opening file.\n");
+				return -1;
+			}
+
+			bzero(buffer,sizeof(buffer));
+			while(true) {
+				if(!strcmp(buffer, "Over")) {
+					fclose(fp);
+					break;
+				}
+				nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &server_addr, (socklen_t *) &addr_length);
+				fwrite(buffer, sizeof(char), sizeof(buffer), fp);
+			}
 
 		}
 		if(!strcmp(splitInput, "put")) {
@@ -113,10 +127,9 @@ int main (int argc, char * argv[])
 				printf("Sent: %i bytes\n", nbytes);
 			}
 			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
+			fclose(fp);
 
 
-			// bzero(buffer,sizeof(buffer));
-			// nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &server_addr, (socklen_t *) &addr_length);
 
 		}
 		else {

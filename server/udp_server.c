@@ -27,7 +27,10 @@ int main (int argc, char * argv[] )
 	int nbytes;                        //number of bytes we receive in our message
 	char buffer[MAXBUFSIZE];             //a buffer to store our received message
 	char compareBuffer[MAXBUFSIZE];
+	char sendBuffer[MAXBUFSIZE];
 	char fileName[MAXBUFSIZE];
+	char errOpeningFile[] = "Error opening file.";
+	char over[] = "Over";
 
 
 	FILE* fp;
@@ -88,9 +91,7 @@ int main (int argc, char * argv[] )
 		if(!strcmp(buffer, "put")) {
 
 			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
-			printf("%s\n", buffer);
 			sprintf(fileName, "%s", buffer);
-			printf("%s\n", buffer);
 
 			fp = fopen(fileName, "w+");
 			if(fp == NULL) {
@@ -99,7 +100,6 @@ int main (int argc, char * argv[] )
 			}
 			while(true) {
 				if(!strcmp(buffer, "Over")) {
-					printf("hit\n");
 					fclose(fp);
 					break;
 				}
@@ -107,6 +107,34 @@ int main (int argc, char * argv[] )
 				printf("%s\n", buffer);
 				fwrite(buffer, sizeof(char), sizeof(buffer), fp);
 			}
+		}
+		else if(!strcmp(buffer, "get")) {
+			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
+			printf("%s\n", buffer);
+			sprintf(fileName, "%s", buffer);
+			printf("%s\n", buffer);
+
+			fp = fopen(fileName, "r");
+			if(fp == NULL) {
+				printf("Error opening file.\n");
+				// nbytes = sendto(sock, &errOpeningFile, strlen(errOpeningFile), 0, (struct sockaddr *) &remote, remote_length);
+				return -1;
+				// continue;
+			}
+			bzero(sendBuffer,sizeof(sendBuffer));
+			while(!feof(fp))
+			{
+				fread(sendBuffer, sizeof(char), MAXBUFSIZE, fp);
+				printf("%s\n", sendBuffer);
+				nbytes = sendto(sock, &sendBuffer, sizeof(sendBuffer), 0, (struct sockaddr *) &remote, sizeof(remote));
+				printf("Sent: %i bytes\n", nbytes);
+			}
+			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
+			fclose(fp);
+
+
+
+
 		}
 		else {
 			char msg[] = "Did not understand command.\n\n\n";
