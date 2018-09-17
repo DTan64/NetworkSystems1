@@ -70,16 +70,18 @@ int main (int argc, char * argv[])
 	char* splitInput;
 
 	while(1) {
-		printf("Here is a list of commands: [get, put, ls, exit]\n");
+		printf("Here is a list of commands: [get, put, ls, delete, exit]\n");
 		printf("What would you like to do?\n");
 		fgets(userInput, MAXBUFSIZE, stdin);
 
 		splitInput = strtok(userInput, " ");
+		printf("SplitInput: %s\n", splitInput);
 
 
 
 
 		if(!strcmp(splitInput, "get")) {
+			printf("Executing GET\n");
 			nbytes = sendto(sock, &get, sizeof(get), 0, (struct sockaddr *) &remote, sizeof(remote));
 			splitInput = strtok(NULL, " ");
 			splitInput[strlen(splitInput) - 1] = '\0';
@@ -105,7 +107,8 @@ int main (int argc, char * argv[])
 			}
 
 		}
-		if(!strcmp(splitInput, "put")) {
+		else if(!strcmp(splitInput, "put")) {
+			printf("Executing PUT\n");
 			nbytes = sendto(sock, &put, sizeof(put), 0, (struct sockaddr *) &remote, sizeof(remote));
 			splitInput = strtok(NULL, " ");
 			printf("%s\n", splitInput);
@@ -118,14 +121,16 @@ int main (int argc, char * argv[])
 				continue;
 			}
 
-			bzero(buffer,sizeof(buffer));
 			while(!feof(fp))
 			{
+				printf("Inside loop\n");
+				bzero(buffer,sizeof(buffer));
 				fread(buffer, sizeof(char), MAXBUFSIZE, fp);
-				printf("%s\n", buffer);
+				printf("fileBuffer: %s\n", buffer);
 				nbytes = sendto(sock, &buffer, sizeof(buffer), 0, (struct sockaddr *) &remote, sizeof(remote));
 				printf("Sent: %i bytes\n", nbytes);
 			}
+			printf("outside loop\n");
 			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
 			fclose(fp);
 
@@ -134,6 +139,7 @@ int main (int argc, char * argv[])
 		}
 		else {
 			// Blocks till bytes are received
+			printf("Waiting for bytes.\n");
 
 			bzero(buffer,sizeof(buffer));
 			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &server_addr, (socklen_t *) &addr_length);

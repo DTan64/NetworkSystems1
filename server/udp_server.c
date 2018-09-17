@@ -83,8 +83,9 @@ int main (int argc, char * argv[] )
 	while(true)
 	{
 		// bzero(buffer,sizeof(buffer));
+		printf("Waiting for bytes...\n");
 		nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
-		printf("%s\n", buffer);
+		printf("First Recieved: %s\n", buffer);
 
 
 
@@ -98,6 +99,8 @@ int main (int argc, char * argv[] )
 				printf("Error opening file.\n");
 				return -1;
 			}
+
+			bzero(buffer,sizeof(buffer));
 			while(true) {
 				if(!strcmp(buffer, "Over")) {
 					fclose(fp);
@@ -137,6 +140,7 @@ int main (int argc, char * argv[] )
 
 		}
 		else {
+			printf("Sending: did not understand\n");
 			char msg[] = "Did not understand command.\n\n\n";
 			nbytes = sendto(sock, &msg, strlen(msg), 0, (struct sockaddr *) &remote, remote_length);
 		}
