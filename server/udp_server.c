@@ -129,11 +129,13 @@ int main (int argc, char * argv[] )
 			bzero(sendBuffer,sizeof(sendBuffer));
 			while(!feof(fp))
 			{
+				bzero(sendBuffer,sizeof(sendBuffer));
 				fread(sendBuffer, sizeof(char), MAXBUFSIZE, fp);
-				printf("%s\n", sendBuffer);
+				printf("fileBuffer%s\n", sendBuffer);
 				nbytes = sendto(sock, &sendBuffer, sizeof(sendBuffer), 0, (struct sockaddr *) &remote, sizeof(remote));
 				printf("Sent: %i bytes\n", nbytes);
 			}
+			printf("Outside loop\n");
 			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
 			fclose(fp);
 
