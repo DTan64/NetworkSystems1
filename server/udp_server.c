@@ -100,14 +100,16 @@ int main (int argc, char * argv[] )
 				return -1;
 			}
 
-			bzero(buffer,sizeof(buffer));
+			// bzero(buffer,sizeof(buffer));
 			while(true) {
+				bzero(buffer,sizeof(buffer));
+				nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
+				printf("BUFFER: %s\n", buffer);
 				if(!strcmp(buffer, "Over")) {
+					printf("Recieved Over\n");
 					fclose(fp);
 					break;
 				}
-				nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
-				printf("%s\n", buffer);
 				fwrite(buffer, sizeof(char), sizeof(buffer), fp);
 			}
 		}
