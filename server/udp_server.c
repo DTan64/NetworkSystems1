@@ -161,15 +161,36 @@ int main (int argc, char * argv[] )
 			}
 			printf("%s\n", buffer);
 			nbytes = sendto(sock, &buffer, strlen(buffer), 0, (struct sockaddr *) &remote, remote_length);
-
+			closedir(dir);
 
 		}
 		else if(!strcmp(buffer, "delete")) {
+
 			bzero(buffer,sizeof(buffer));
 			bzero(filePath,sizeof(filePath));
 			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
 			sprintf(fileName, "%s", buffer);
 			printf("%s\n",fileName );
+			sprintf(fileName, "%s", buffer);
+			strcat(filePath, folderName);
+			strcat(filePath, fileName);
+			printf("%s\n", filePath);
+
+			int ret;
+			ret = remove(filePath);
+
+		  if(ret == 0) {
+				printf("File deleted successfully");
+		  }
+			else {
+				printf("Error: unable to delete the file");
+		  }
+
+
+
+
+
+
 		}
 		else {
 			printf("Sending: did not understand\n");
