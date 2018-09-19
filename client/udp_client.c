@@ -140,6 +140,24 @@ int main (int argc, char * argv[])
 
 
 		}
+		else if(!strcmp(splitInput, "ls\n")) {
+			nbytes = sendto(sock, &ls, sizeof(ls), 0, (struct sockaddr *) &remote, sizeof(remote));
+			bzero(buffer,sizeof(buffer));
+			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &server_addr, (socklen_t *) &addr_length);
+			printf("%s\n", buffer);
+		}
+		else if(!strcmp(splitInput, "delete")) {
+			nbytes = sendto(sock, &delete, sizeof(delete), 0, (struct sockaddr *) &remote, sizeof(remote));
+			splitInput = strtok(NULL, " ");
+			printf("%s\n", splitInput);
+			splitInput[strlen(splitInput) - 1] = '\0';
+			nbytes = sendto(sock, splitInput, sizeof(splitInput), 0, (struct sockaddr *) &remote, sizeof(remote));
+
+		}
+		else if(!strcmp(splitInput, "exit\n")) {
+			close(sock);
+			return 0;
+		}
 		else {
 			// Blocks till bytes are received
 			printf("Waiting for bytes.\n");

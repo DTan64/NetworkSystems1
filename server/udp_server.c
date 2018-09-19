@@ -13,6 +13,7 @@
 #include <memory.h>
 #include <string.h>
 #include <stdbool.h>
+#include <dirent.h>
 /* You will have to modify the program below */
 
 #define MAXBUFSIZE 100
@@ -29,18 +30,15 @@ int main (int argc, char * argv[] )
 	char compareBuffer[MAXBUFSIZE];
 	char sendBuffer[MAXBUFSIZE];
 	char fileName[MAXBUFSIZE];
+	char folderName[MAXBUFSIZE] = "./files/";
+	char filePath[MAXBUFSIZE];
 	char errOpeningFile[] = "Error opening file.";
 	char over[] = "Over";
 
 
 	FILE* fp;
-	// fp = fopen("foo1", "w+");
-	// if(fp == NULL) {
-	// 	printf("error opening file.\n");
-	// 	return -1;
-	// }
-	// printf("you made it.\n");
-	// return -2;
+	DIR* dir;
+	struct dirent* in_file;
 
 
 	if (argc != 2)
@@ -82,7 +80,7 @@ int main (int argc, char * argv[] )
 
 	while(true)
 	{
-		// bzero(buffer,sizeof(buffer));
+		bzero(buffer,sizeof(buffer));
 		printf("Waiting for bytes...\n");
 		nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
 		printf("First Recieved: %s\n", buffer);
@@ -90,11 +88,14 @@ int main (int argc, char * argv[] )
 
 
 		if(!strcmp(buffer, "put")) {
-
+			bzero(buffer,sizeof(buffer));
+			bzero(filePath,sizeof(filePath));
 			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
 			sprintf(fileName, "%s", buffer);
+			strcat(filePath, folderName);
+			strcat(filePath, fileName);
 
-			fp = fopen(fileName, "w+");
+			fp = fopen(filePath, "w+");
 			if(fp == NULL) {
 				printf("Error opening file.\n");
 				return -1;
@@ -114,12 +115,16 @@ int main (int argc, char * argv[] )
 			}
 		}
 		else if(!strcmp(buffer, "get")) {
+			bzero(buffer,sizeof(buffer));
+			bzero(filePath,sizeof(filePath));
 			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
-			printf("%s\n", buffer);
+			printf("%s\n",fileName );
 			sprintf(fileName, "%s", buffer);
-			printf("%s\n", buffer);
+			strcat(filePath, folderName);
+			strcat(filePath, fileName);
+			printf("%s\n", folderName);
 
-			fp = fopen(fileName, "r");
+			fp = fopen(filePath, "r");
 			if(fp == NULL) {
 				printf("Error opening file.\n");
 				// nbytes = sendto(sock, &errOpeningFile, strlen(errOpeningFile), 0, (struct sockaddr *) &remote, remote_length);
@@ -139,9 +144,32 @@ int main (int argc, char * argv[] )
 			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
 			fclose(fp);
 
+		}
+		else if(!strcmp(buffer, "ls")) {
+			dir = opendir("./files");
+			if(dir == NULL) {
+				printf("Error opening directory\n");
+				return -1;
+			}
+			bzero(buffer,sizeof(buffer));
+			while((in_file = readdir(dir))) {
+				if(!strcmp(in_file->d_name, ".") || !strcmp(in_file->d_name, ".."))
+					continue;
+				printf("%s\n", in_file->d_name);
+				strcat(buffer, in_file->d_name);
+				strcat(buffer, ", ");
+			}
+			printf("%s\n", buffer);
+			nbytes = sendto(sock, &buffer, strlen(buffer), 0, (struct sockaddr *) &remote, remote_length);
 
 
-
+		}
+		else if(!strcmp(buffer, "delete")) {
+			bzero(buffer,sizeof(buffer));
+			bzero(filePath,sizeof(filePath));
+			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
+			sprintf(fileName, "%s", buffer);
+			printf("%s\n",fileName );
 		}
 		else {
 			printf("Sending: did not understand\n");
