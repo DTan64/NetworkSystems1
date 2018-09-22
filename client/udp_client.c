@@ -100,9 +100,7 @@ int main (int argc, char * argv[])
 			while(true) {
 				bzero(buffer,sizeof(buffer));
 				nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &server_addr, (socklen_t *) &addr_length);
-				printf("BUFFER: %s\n", buffer);
 				if(!strcmp(buffer, "Over")) {
-					printf("Recieved Over\n");
 					fclose(fp);
 					break;
 				}
@@ -114,7 +112,6 @@ int main (int argc, char * argv[])
 			printf("Executing PUT\n");
 			nbytes = sendto(sock, &put, sizeof(put), 0, (struct sockaddr *) &remote, sizeof(remote));
 			splitInput = strtok(NULL, " ");
-			printf("%s\n", splitInput);
 			splitInput[strlen(splitInput) - 1] = '\0';
 			nbytes = sendto(sock, splitInput, sizeof(splitInput), 0, (struct sockaddr *) &remote, sizeof(remote));
 
@@ -126,19 +123,12 @@ int main (int argc, char * argv[])
 
 			while(!feof(fp))
 			{
-				printf("Inside loop\n");
 				bzero(buffer,sizeof(buffer));
 				fread(buffer, sizeof(char), MAXBUFSIZE, fp);
-				printf("fileBuffer: %s\n", buffer);
 				nbytes = sendto(sock, &buffer, sizeof(buffer), 0, (struct sockaddr *) &remote, sizeof(remote));
-				printf("Sent: %i bytes\n", nbytes);
 			}
-			printf("outside loop\n");
 			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
 			fclose(fp);
-
-
-
 		}
 		else if(!strcmp(splitInput, "ls\n")) {
 			nbytes = sendto(sock, &ls, sizeof(ls), 0, (struct sockaddr *) &remote, sizeof(remote));
@@ -152,11 +142,10 @@ int main (int argc, char * argv[])
 			printf("%s\n", splitInput);
 			splitInput[strlen(splitInput) - 1] = '\0';
 			nbytes = sendto(sock, splitInput, sizeof(splitInput), 0, (struct sockaddr *) &remote, sizeof(remote));
-
 		}
 		else if(!strcmp(splitInput, "exit\n")) {
-			close(sock);
-			return 0;
+			nbytes = sendto(sock, &exitServer, sizeof(exitServer), 0, (struct sockaddr *) &remote, sizeof(remote));
+			bzero(buffer,sizeof(buffer));
 		}
 		else {
 			// Blocks till bytes are received
@@ -167,9 +156,6 @@ int main (int argc, char * argv[])
 			printf("%s\n", buffer);
 		}
 	}
-
-	//nbytes = sendto(sock, fileBuffer, sizeof(buffer), 0, (struct sockaddr *) &remote, sizeof(remote));
-	// printf("Sent: %i bytes\n", nbytes);
 
 
 	close(sock);
