@@ -17,6 +17,8 @@
 #include <sys/stat.h>
 /* You will have to modify the program below */
 
+// TODO: make files directory
+
 #define MAXBUFSIZE 100
 
 int main (int argc, char * argv[] )
@@ -102,13 +104,12 @@ int main (int argc, char * argv[] )
 				bzero(buffer,sizeof(buffer));
 				nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
 
-				printf("BUFFER: %s\n", buffer);
+				// printf("BUFFER: %s\n", buffer);
 				if(!strcmp(buffer, "Over")) {
 					printf("Recieved Over\n");
 					close(fd);
 					break;
 				}
-				// fwrite(buffer, sizeof(char), sizeof(buffer), fp);
 				write(fd, buffer, sizeof(buffer));
 			}
 		}
@@ -122,22 +123,18 @@ int main (int argc, char * argv[] )
 			strcat(filePath, folderName);
 			strcat(filePath, fileName);
 
-			fp = fopen(filePath, "r");
-			if(fp == NULL) {
+			int fd = open(filePath, O_RDONLY);
+			if(fd < 0) {
 				printf("Error opening file.\n");
 				return -1;
 			}
 
 			bzero(sendBuffer,sizeof(sendBuffer));
-			while(!feof(fp))
-			{
-				bzero(sendBuffer,sizeof(sendBuffer));
-				fread(sendBuffer, sizeof(char), MAXBUFSIZE, fp);
+			while(read(fd, sendBuffer, sizeof(sendBuffer)) != 0) {
 				nbytes = sendto(sock, &sendBuffer, sizeof(sendBuffer), 0, (struct sockaddr *) &remote, sizeof(remote));
 			}
-
 			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
-			fclose(fp);
+			close(fd);
 		}
 
 		else if(!strcmp(buffer, "ls")) {

@@ -16,6 +16,7 @@
 #define MAXBUFSIZE 100
 
 /* You will have to modify the program below */
+// TODO: remove file on get command
 
 int main (int argc, char * argv[])
 {
@@ -83,9 +84,9 @@ int main (int argc, char * argv[])
 			nbytes = sendto(sock, splitInput, sizeof(splitInput), 0, (struct sockaddr *) &remote, sizeof(remote));
 
 			sprintf(fileName, "%s", splitInput);
-			fp = fopen(fileName, "w+");
+			int fd = open(fileName, O_CREAT | O_WRONLY | O_APPEND, 0755);
 
-			if(fp == NULL) {
+			if(fd < 0) {
 				printf("Error opening file.\n");
 				return -1;
 			}
@@ -94,10 +95,10 @@ int main (int argc, char * argv[])
 			while(true) {
 				nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &server_addr, (socklen_t *) &addr_length);
 				if(!strcmp(buffer, "Over")) {
-					fclose(fp);
+					close(fd);
 					break;
 				}
-				fwrite(buffer, sizeof(char), sizeof(buffer), fp);
+				write(fd, buffer, sizeof(buffer));
 			}
 		}
 
@@ -107,22 +108,14 @@ int main (int argc, char * argv[])
 			splitInput[strlen(splitInput) - 1] = '\0';
 			nbytes = sendto(sock, splitInput, sizeof(splitInput), 0, (struct sockaddr *) &remote, sizeof(remote));
 
-			printf("about to open\n");
 			int fd = open(splitInput, O_RDONLY);
 			if(fd < 0) {
 				printf("Error opening file.\n");
 				continue;
 			}
-			printf("opened\n");
 
 			bzero(buffer,sizeof(buffer));
-			while(1)
-			{
-				// fread(buffer, sizeof(char), MAXBUFSIZE, fp);
-				printf("about to read\n");
-				if(read(fd, buffer, sizeof(buffer)) == 0) {
-					break;
-				}
+			while(read(fd, buffer, sizeof(buffer)) != 0) {
 				nbytes = sendto(sock, &buffer, sizeof(buffer), 0, (struct sockaddr *) &remote, sizeof(remote));
 			}
 			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
