@@ -40,6 +40,7 @@ int main (int argc, char * argv[] )
 	char fileDeleted[] = "File deleted.";
 	char fileDNE[] = "File does not exit.";
 	char errCommand[] = "Did not understand command.\n\n\n";
+	int fd;
 
 	DIR* dir;
 	struct dirent* in_file;
@@ -93,10 +94,11 @@ int main (int argc, char * argv[] )
 			strcat(filePath, fileName);
 
 			umask(0);
-			int fd = open(filePath, O_CREAT | O_WRONLY | O_APPEND, 0755);
+			fd = open(filePath, O_CREAT | O_WRONLY | O_APPEND, 0755);
 			if(fd < 0) {
 				printf("Error opening file.\n");
-				return -1;
+				close(fd);
+				continue;
 			}
 
 			while(true) {
@@ -122,10 +124,12 @@ int main (int argc, char * argv[] )
 			strcat(filePath, folderName);
 			strcat(filePath, fileName);
 
-			int fd = open(filePath, O_RDONLY);
+			fd = open(filePath, O_RDONLY);
 			if(fd < 0) {
 				printf("Error opening file.\n");
-				return -1;
+				nbytes = sendto(sock, &errOpeningFile, sizeof(errOpeningFile), 0, (struct sockaddr *) &remote, sizeof(remote));
+				close(fd);
+				continue;
 			}
 
 			bzero(sendBuffer,sizeof(sendBuffer));

@@ -35,8 +35,7 @@ int main (int argc, char * argv[])
 	char ls[] = "ls";
 	char exitServer[] = "exit";
 	char over[] = "Over";
-
-	FILE* fp;
+	int fd;
 
 	if (argc < 3)
 	{
@@ -97,6 +96,11 @@ int main (int argc, char * argv[])
 			while(true) {
 				nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &server_addr, (socklen_t *) &addr_length);
 				if(!strcmp(buffer, "Over")) {
+					close(fd);
+					break;
+				}
+				if(!strcmp(buffer, "Error opening file.")) {
+					printf("Error opening file on server.\n");
 					close(fd);
 					break;
 				}
