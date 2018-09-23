@@ -41,7 +41,6 @@ int main (int argc, char * argv[] )
 	char fileDNE[] = "File does not exit.";
 	char errCommand[] = "Did not understand command.\n\n\n";
 
-	FILE* fp;
 	DIR* dir;
 	struct dirent* in_file;
 
@@ -180,8 +179,6 @@ int main (int argc, char * argv[] )
 		}
 
 		else if(!strcmp(buffer, "exit")) {
-			if(fp != NULL)
-				fclose(fp);
 			if(dir != NULL)
 				closedir(dir);
 			close(sock);

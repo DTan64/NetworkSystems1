@@ -84,6 +84,8 @@ int main (int argc, char * argv[])
 			nbytes = sendto(sock, splitInput, sizeof(splitInput), 0, (struct sockaddr *) &remote, sizeof(remote));
 
 			sprintf(fileName, "%s", splitInput);
+
+			remove(fileName);
 			int fd = open(fileName, O_CREAT | O_WRONLY | O_APPEND, 0755);
 
 			if(fd < 0) {
@@ -115,17 +117,12 @@ int main (int argc, char * argv[])
 			}
 
 			bzero(buffer,sizeof(buffer));
-			// while(read(fd, buffer, sizeof(buffer)) != 0) {
-			// 	nbytes = sendto(sock, &buffer, sizeof(buffer), 0, (struct sockaddr *) &remote, sizeof(remote));
-			// }
 			while(1)
 			{
 				bzero(buffer,sizeof(buffer));
-				// fread(buffer, sizeof(char), MAXBUFSIZE, fp);
 				if(read(fd, buffer, sizeof(buffer)) <= 0) {
 					break;
 				}
-				printf("BUFFER: %s\n", buffer);
 				nbytes = sendto(sock, &buffer, sizeof(buffer), 0, (struct sockaddr *) &remote, sizeof(remote));
 			}
 			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
