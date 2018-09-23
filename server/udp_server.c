@@ -105,7 +105,6 @@ int main (int argc, char * argv[] )
 				bzero(buffer,sizeof(buffer));
 				nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
 
-				printf("BUFFER: %s\n", buffer);
 				if(!strcmp(buffer, "Over")) {
 					printf("Recieved Over\n");
 					close(fd);
