@@ -34,12 +34,13 @@ int main (int argc, char * argv[] )
 	char filePath[MAXBUFSIZE];
 	char errOpeningFile[] = "Error opening file.";
 	char over[] = "Over";
-
+	char fileDeleted[] = "File deleted.";
+	char fileDNE[] = "File does not exit.";
+	char errCommand[] = "Did not understand command.\n\n\n";
 
 	FILE* fp;
 	DIR* dir;
 	struct dirent* in_file;
-
 
 	if (argc != 2)
 	{
@@ -56,13 +57,11 @@ int main (int argc, char * argv[] )
 	sin.sin_port = htons(atoi(argv[1]));        //htons() sets the port # to network byte order
 	sin.sin_addr.s_addr = INADDR_ANY;           //supplies the IP address of the local machine
 
-
 	//Causes the system to create a generic socket of type UDP (datagram)
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
 	{
 		printf("unable to create socket");
 	}
-
 
 	/******************
 	  Once we've created a socket, we must bind that socket to the
@@ -76,21 +75,17 @@ int main (int argc, char * argv[] )
 	remote_length = sizeof(remote);
 	bzero(&remote, remote_length);
 
-	//waits for an incoming message
-
 	while(true)
 	{
 		bzero(buffer,sizeof(buffer));
 		printf("Waiting for bytes...\n");
 		nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
-		printf("First Recieved: %s\n", buffer);
-
-
 
 		if(!strcmp(buffer, "put")) {
 			bzero(buffer,sizeof(buffer));
 			bzero(filePath,sizeof(filePath));
 			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
+
 			sprintf(fileName, "%s", buffer);
 			strcat(filePath, folderName);
 			strcat(filePath, fileName);
@@ -101,10 +96,10 @@ int main (int argc, char * argv[] )
 				return -1;
 			}
 
-			// bzero(buffer,sizeof(buffer));
 			while(true) {
 				bzero(buffer,sizeof(buffer));
 				nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
+
 				printf("BUFFER: %s\n", buffer);
 				if(!strcmp(buffer, "Over")) {
 					printf("Recieved Over\n");
@@ -114,78 +109,76 @@ int main (int argc, char * argv[] )
 				fwrite(buffer, sizeof(char), sizeof(buffer), fp);
 			}
 		}
+
 		else if(!strcmp(buffer, "get")) {
 			bzero(buffer,sizeof(buffer));
 			bzero(filePath,sizeof(filePath));
 			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
-			printf("%s\n",fileName );
+
 			sprintf(fileName, "%s", buffer);
 			strcat(filePath, folderName);
 			strcat(filePath, fileName);
-			printf("%s\n", folderName);
 
 			fp = fopen(filePath, "r");
 			if(fp == NULL) {
 				printf("Error opening file.\n");
-				// nbytes = sendto(sock, &errOpeningFile, strlen(errOpeningFile), 0, (struct sockaddr *) &remote, remote_length);
 				return -1;
-				// continue;
 			}
+
 			bzero(sendBuffer,sizeof(sendBuffer));
 			while(!feof(fp))
 			{
 				bzero(sendBuffer,sizeof(sendBuffer));
 				fread(sendBuffer, sizeof(char), MAXBUFSIZE, fp);
-				printf("fileBuffer%s\n", sendBuffer);
 				nbytes = sendto(sock, &sendBuffer, sizeof(sendBuffer), 0, (struct sockaddr *) &remote, sizeof(remote));
-				printf("Sent: %i bytes\n", nbytes);
 			}
-			printf("Outside loop\n");
+
 			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
 			fclose(fp);
-
 		}
+
 		else if(!strcmp(buffer, "ls")) {
 			dir = opendir("./files");
 			if(dir == NULL) {
 				printf("Error opening directory\n");
 				return -1;
 			}
+
 			bzero(buffer,sizeof(buffer));
 			while((in_file = readdir(dir))) {
 				if(!strcmp(in_file->d_name, ".") || !strcmp(in_file->d_name, ".."))
 					continue;
-				printf("%s\n", in_file->d_name);
 				strcat(buffer, in_file->d_name);
-				strcat(buffer, ", ");
+				strcat(buffer, " ");
 			}
-			printf("%s\n", buffer);
+
+			buffer[strlen(buffer) - 1] = '\0';
 			nbytes = sendto(sock, &buffer, strlen(buffer), 0, (struct sockaddr *) &remote, remote_length);
-			// closedir(dir);
-
 		}
-		else if(!strcmp(buffer, "delete")) {
 
+		else if(!strcmp(buffer, "delete")) {
 			bzero(buffer,sizeof(buffer));
 			bzero(filePath,sizeof(filePath));
 			nbytes = recvfrom(sock, buffer, MAXBUFSIZE, 0, (struct sockaddr *) &remote, (socklen_t *) &remote_length);
+
 			sprintf(fileName, "%s", buffer);
-			printf("%s\n",fileName );
 			sprintf(fileName, "%s", buffer);
 			strcat(filePath, folderName);
 			strcat(filePath, fileName);
-			printf("%s\n", filePath);
 
 			int ret = 1;
 			ret = remove(filePath);
 
 		  if(ret == 0) {
 				printf("File deleted successfully\n");
+				nbytes = sendto(sock, &fileDeleted, strlen(fileDeleted), 0, (struct sockaddr *) &remote, remote_length);
 		  }
 			else {
 				printf("Error: unable to delete the file\n");
+				nbytes = sendto(sock, &fileDNE, strlen(fileDNE), 0, (struct sockaddr *) &remote, remote_length);
 		  }
 		}
+
 		else if(!strcmp(buffer, "exit")) {
 			if(fp != NULL)
 				fclose(fp);
@@ -195,9 +188,7 @@ int main (int argc, char * argv[] )
 			return 0;
 		}
 		else {
-			printf("Sending: did not understand\n");
-			char msg[] = "Did not understand command.\n\n\n";
-			nbytes = sendto(sock, &msg, strlen(msg), 0, (struct sockaddr *) &remote, remote_length);
+			nbytes = sendto(sock, &errCommand, strlen(errCommand), 0, (struct sockaddr *) &remote, remote_length);
 		}
   }
 }
