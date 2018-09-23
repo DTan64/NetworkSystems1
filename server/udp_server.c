@@ -14,6 +14,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <dirent.h>
+#include <sys/stat.h>
 /* You will have to modify the program below */
 
 #define MAXBUFSIZE 100
@@ -90,7 +91,8 @@ int main (int argc, char * argv[] )
 			strcat(filePath, folderName);
 			strcat(filePath, fileName);
 
-			int fd = open(filePath, O_CREAT | O_WRONLY | O_APPEND, 0777);
+			umask(0);
+			int fd = open(filePath, O_CREAT | O_WRONLY | O_APPEND, 0755);
 			if(fd < 0) {
 				printf("Error opening file.\n");
 				return -1;
