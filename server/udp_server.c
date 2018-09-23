@@ -180,8 +180,6 @@ int main (int argc, char * argv[] )
 		}
 
 		else if(!strcmp(buffer, "exit")) {
-			if(fd > 0)
-				close(fd);
 			if(dir != NULL)
 				closedir(dir);
 			close(sock);
