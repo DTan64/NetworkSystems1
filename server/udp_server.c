@@ -90,8 +90,8 @@ int main (int argc, char * argv[] )
 			strcat(filePath, folderName);
 			strcat(filePath, fileName);
 
-			fp = fopen(filePath, "w+");
-			if(fp == NULL) {
+			int fd = open(filePath, O_CREAT | O_WRONLY | O_APPEND);
+			if(fd < 0) {
 				printf("Error opening file.\n");
 				return -1;
 			}
@@ -103,10 +103,11 @@ int main (int argc, char * argv[] )
 				printf("BUFFER: %s\n", buffer);
 				if(!strcmp(buffer, "Over")) {
 					printf("Recieved Over\n");
-					fclose(fp);
+					close(fd);
 					break;
 				}
-				fwrite(buffer, sizeof(char), sizeof(buffer), fp);
+				// fwrite(buffer, sizeof(char), sizeof(buffer), fp);
+				write(fd, buffer, sizeof(buffer));
 			}
 		}
 

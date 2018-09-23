@@ -24,7 +24,7 @@ int main (int argc, char * argv[])
 	int sock;                               //this will be our socket
 	char buffer[MAXBUFSIZE];
 	bool flag = false;
-	char userInput[MAXBUFSIZE]; 
+	char userInput[MAXBUFSIZE];
 	char fileName[MAXBUFSIZE];
 	struct sockaddr_in remote;              //"Internet socket address structure"
 
@@ -107,20 +107,26 @@ int main (int argc, char * argv[])
 			splitInput[strlen(splitInput) - 1] = '\0';
 			nbytes = sendto(sock, splitInput, sizeof(splitInput), 0, (struct sockaddr *) &remote, sizeof(remote));
 
-			fp = fopen(splitInput, "r");
-			if(fp == NULL) {
+			printf("about to open\n");
+			int fd = open(splitInput, O_RDONLY);
+			if(fd < 0) {
 				printf("Error opening file.\n");
 				continue;
 			}
+			printf("opened\n");
 
 			bzero(buffer,sizeof(buffer));
-			while(!feof(fp))
+			while(1)
 			{
-				fread(buffer, sizeof(char), MAXBUFSIZE, fp);
+				// fread(buffer, sizeof(char), MAXBUFSIZE, fp);
+				printf("about to read\n");
+				if(read(fd, buffer, sizeof(buffer)) == 0) {
+					break;
+				}
 				nbytes = sendto(sock, &buffer, sizeof(buffer), 0, (struct sockaddr *) &remote, sizeof(remote));
 			}
 			nbytes = sendto(sock, &over, sizeof(over), 0, (struct sockaddr *) &remote, sizeof(remote));
-			fclose(fp);
+			close(fd);
 		}
 
 		else if(!strcmp(splitInput, "ls\n")) {
