@@ -90,7 +90,7 @@ int main (int argc, char * argv[] )
 			strcat(filePath, folderName);
 			strcat(filePath, fileName);
 
-			int fd = open(filePath, O_CREAT | O_WRONLY | O_APPEND);
+			int fd = open(filePath, O_CREAT | O_WRONLY | O_APPEND, 0777);
 			if(fd < 0) {
 				printf("Error opening file.\n");
 				return -1;
